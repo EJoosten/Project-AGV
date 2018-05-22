@@ -1,6 +1,6 @@
 void setup() {
   pinMode(A0, OUTPUT);
-  Serial.begin(9600);
+  Serial.begin(9600); //Set serial begin
 }
 
 void loop() {
