@@ -2,9 +2,6 @@
 #include <Servo.h>
 #include <NewPing.h>
 
-#include <Stepper.h>
-#include <Servo.h>
-
 #define trigPin  10  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define echoPin     13  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
@@ -50,8 +47,9 @@ void setup()
 {
   Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
   pinMode(13, OUTPUT);  //Sets digital pin 13 as output pin
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+  
+  pinMode(trigPin, OUTPUT); //Set trigger pin on sensor as output 
+  pinMode(echoPin, INPUT); // Set echo pin on sensor as input
 
   // set the speed at 60 rpm:
   myStepperR.setSpeed(60);
@@ -76,7 +74,7 @@ void Guiding() {
   Serial.println(PotValueR); // print potmeter waarde via seriele monitor.
   Serial.print("Pot-meter Links:  ");
   Serial.println(PotValueL); // print potmeter waarde via seriele monitor.
-  delay(15); // even wachten voor een nieuwe loop.
+  delay(15); // wait a moment for a new loop 
 
   if (PotValueR > 775 && PotValueL > 775) {
     turn = 0;
@@ -154,14 +152,14 @@ void servo() {
 
 void Steppers() {
   switch (follow) {
-    case 'f':
+    case 'f': // go forwards
       for (int i = 0; i < 100; i++) {
         myStepperR.step(-1);
         myStepperL.step(1);
       }
       break;
 
-    case 's':
+    case 's': // stop driving
       myStepperR.step(0);
       myStepperL.step(0);
       break;
@@ -170,14 +168,14 @@ void Steppers() {
 
 void Bend() {
   switch (way) {
-    case 'l':
+    case 'l': // turn 90 degrees left
       for (int i = 0; i < 100; i++) {
         myStepperR.step(1);
         myStepperL.step(1);
       }
       break;
 
-    case 'r':
+    case 'r': // turn 90 degrees right
       for (int i = 0; i < 100; i++) {
         myStepperR.step(-1);
         myStepperL.step(-1);
