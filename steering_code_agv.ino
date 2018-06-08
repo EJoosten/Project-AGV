@@ -11,6 +11,14 @@
 
 const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution for your motor
 
+#define trig 10
+#define led 12
+#define echo 13
+#define servo 11
+#define potL A1
+#define potR A0
+
+
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepperR(stepsPerRevolution, 6, 7, 8, 9);
 Stepper myStepperL(stepsPerRevolution, 2, 3, 4, 5);
@@ -28,31 +36,63 @@ void setup()
 
 void movement()
 {
-  if (Mangle < -1)
-  {
-    MspeedL = (Mspeed + 10);
-    MspeedR = (Mspeed - 10);
-  }
-  else if (Mangle > 1)
-  {
-    MspeedL = (Mspeed - 10);
-    MspeedR = (Mspeed + 10);
-  } 
-  else
-  {
-    MspeedL = Mspeed;
-    MspeedR = Mspeed;
+  if (Mcycle % 15 == 0) {
+    if (Mangle < -1)
+    {
+      if (MspeedL < Mspeed + 10) {
+        MspeedL++;
+      }
+      else if (MspeedL > Mspeed + 10) {
+        MspeedL--;
+      }
+      if (MspeedR < Mspeed - 10) {
+        MspeedR++;
+      }
+      else if (MspeedR > Mspeed - 10) {
+        MspeedR--;
+      }
+    }
+    else if (Mangle > 1)
+    {
+      if (MspeedL < Mspeed - 10) {
+        MspeedL++;
+      }
+      else if (MspeedL > Mspeed - 10) {
+        MspeedL--;
+      }
+      if (MspeedR < Mspeed + 10) {
+        MspeedR++;
+      }
+      else if (MspeedR > Mspeed + 10) {
+        MspeedR--;
+      }
+    }
+    else
+    {
+      if (MspeedL < Mspeed) {
+        MspeedL++;
+      }
+      else if (MspeedL > Mspeed) {
+        MspeedL--;
+      }
+      if (MspeedR < Mspeed) {
+        MspeedR++;
+      }
+      else if (MspeedR > Mspeed) {
+        MspeedR--;
+      }
+    }
   }
 
   if (MspeedL > 0) {
     if ((Mcycle % (100 / MspeedL)) == 0)
     {
       myStepperL.step(-1);
-      Mangle+= 0.23;
+      Mangle += 0.23;
     }
   }
   else if (MspeedL < 0) {
-    if ((Mcycle % (100 / -MspeedL)) == 0)
+    if ((Mcycle % (100 / MspeedL)) == 0)
     {
       myStepperL.step(1);
       Mangle -= 0.23;
@@ -63,14 +103,15 @@ void movement()
     if ((Mcycle % (100 / MspeedR)) == 0)
     {
       myStepperR.step(1);
-      Mangle-= 0.23;
+      Mangle -= 0.23;
     }
   }
- else if (MspeedR < 0) {
-    if ((Mcycle % (100 / -MspeedR)) == 0)
+  else if (MspeedR < 0) {
+    if ((Mcycle % (100 / MspeedR)) == 0)
     {
       myStepperR.step(-1);
       Mangle += 0.23;
+    }
   }
   if (-2 < Mangle && Mangle < 2)
   {
@@ -79,10 +120,9 @@ void movement()
   if (Mcycle >= 100) {
     Mcycle = 0;
   }
-
   Mcycle++;
 
-}
+
 }
 
 void loop()
@@ -123,6 +163,9 @@ void loop()
 
 
   }
+  /* Serial.print(analogRead(potL));
+    Serial.print("   ");
+    Serial.println(analogRead(potR));*/
   movement();
   delay(1);
 }
