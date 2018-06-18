@@ -1,0 +1,7 @@
+13 sonar groen
+12 ledjes
+11 servo
+10 sonar geel
+9-2 steppers
+a0 arm rechts
+a1 arm links
