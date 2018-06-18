@@ -1,5 +1,5 @@
 /*
- Main code. kaas
+ Main code.
  */
 
 #include <Stepper.h>
@@ -244,7 +244,7 @@ void potread() {                //Function to see if the AGV drives straight
       //Serial.println("sit3");
     }
   }
-  if ((potangleR + potangleL) > 1580) { //Both arms turn outwards(AGV needs to turn)  Can be changed to else right??
+  else { //Both arms turn outwards(AGV needs to turn)  Can be changed to else right??
     situation = 4;
     //Serial.println("sit4");
   }
