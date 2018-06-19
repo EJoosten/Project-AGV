@@ -1,30 +1,19 @@
 /*
-  Main code. kaas
+  - Main code.
+  + Main code. kaas
 */
 
 #include <Stepper.h>
 #include <NewPing.h>
 #include <Servo.h>
-#include <FAB_LED.h>
 
-#define TRIGGER_PIN  9  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN     8  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define TRIGGER_PIN  10  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN     13  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define trig 10
 #define led 12      //LED tied to pin 12
-#define echo 13
 #define servo 11    //Servo pin is tied to arduino pin 11
 #define potL A1     //Potio meter on the left on arduino pin A1
 #define potR A0     //Potio meter on the right on arduino pin A0
-
-
-/// @brief This parameter says how many LEDs will be lit up in your strip.
-const uint8_t numPixels = 2;
-
-/// @brief This says how bright LEDs will be (max is 255)
-const uint8_t maxBrightness = 100;
-apa104<B, 4>   LEDstrip;
-grb  pixels[numPixels] = {};
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -42,122 +31,23 @@ const int stepsPerRevolution = 200;  // change this to fit the number of steps p
 // initialize the stepper library on pins 8 through 11:
 Stepper myStepperR(stepsPerRevolution, 6, 7, 8, 9);
 Stepper myStepperL(stepsPerRevolution, 2, 3, 4, 5);
-volatile int Mspeed, MspeedT, MspeedL, MspeedR, Mcycle, navigation = 1, turn, situation = 1, potangleL, potangleR, mills, leds;
-volatile float Mangle;
+volatile int Mspeed, MspeedT, MspeedL, MspeedR, Mcycle, navigation = 1, turn, situation = 1, potangleL, potangleR, distance;
+volatile float Mangle, duration;
 char data = 0;            //Variable for storing received data
 void setup()
 {
-
-  for (uint8_t pos = 0; pos < numPixels; pos++) {
-    pixels[pos].g = 0;
-    pixels[pos].b = 0;
-    pixels[pos].r = 0;
-  }
-  LEDstrip.refresh(); // Hack: needed for apa102 to display last pixels
-  // Clear display
-  LEDstrip.sendPixels(numPixels, pixels);
-  LEDstrip.refresh(); // Hack: needed for apa102 to display last pixels
   myservo.attach(5);
-  Serial.begin(9600);
-
   Serial.begin(9600);   //Sets the baud for serial data transmission
   // set the speed at 60 rpm:
   myStepperR.setSpeed(60);
   myStepperL.setSpeed(60);
   pinMode(13, OUTPUT);  //Sets digital pin 13 as output pin
-}
-void ledRed()
-{
-  if (leds != 1) {
-    leds = 1;
-    pixels[0].g = 255;
-    pixels[0].r = 0;
-    pixels[0].b = 0;
-    pixels[1].g = 255;
-    pixels[1].r = 0;
-    pixels[1].b = 0;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-
-  }
+  pinMode(TRIGGER_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
 }
 
-void ledGreen()
-{
-  if (leds != 2) {
-    leds = 2;
-    pixels[0].g = 0;
-    pixels[0].r = 200;
-    pixels[0].b = 0;
-    pixels[1].g = 0;
-    pixels[1].r = 200;
-    pixels[1].b = 0;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-  }
-}
-void ledOrangeLeft()
-{
-  if (leds != 3) {
-    leds = 3;
-    pixels[0].g = 255;
-    pixels[0].r = 62;
-    pixels[0].b = 0;
-    pixels[1].g = 0;
-    pixels[1].r = 0;
-    pixels[1].b = 0;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-  }
-}
-void ledOrangeRight()
-{
-  if (leds != 4) {
-    leds = 4;
-    pixels[0].g = 0;
-    pixels[0].r = 0;
-    pixels[0].b = 0;
-    pixels[1].g = 255;
-    pixels[1].r = 62;
-    pixels[1].b = 0;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-  }
-}
-void ledBlue()
-{
-  if (leds != 5) {
-    leds = 5;
-    pixels[0].g = 0;
-    pixels[0].r = 0;
-    pixels[0].b = 255;
-    pixels[1].g = 0;
-    pixels[1].r = 0;
-    pixels[1].b = 255;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-  }
-}
-void ledOff()
-{
-  if (leds != 0) {
-    leds = 0;
-    pixels[0].g = 0;
-    pixels[0].r = 0;
-    pixels[0].b = 0;
-    pixels[1].g = 0;
-    pixels[1].r = 0;
-    pixels[1].b = 0;
-    LEDstrip.sendPixels(numPixels, pixels);
-    LEDstrip.refresh();
-  }
-}
 void movement()
 {
-  mills = millis();
-  /*if(Mspeed == 0){
-    ledRed();
-    }*/
   if (Mcycle % 15 == 0) {
     if (MspeedT < Mspeed) {
       MspeedT++;
@@ -168,14 +58,6 @@ void movement()
   }
   if (Mangle < -1)
   {
-    if (mills % 1000 < 500)
-    {
-      ledOrangeLeft();
-    }
-    else
-    {
-      ledOff();
-    }
     if (MspeedL < MspeedT + 10) {
       MspeedL++;
     }
@@ -191,14 +73,6 @@ void movement()
   }
   else if (Mangle > 1)
   {
-    if (mills % 1000 < 500)
-    {
-      ledOrangeRight();
-    }
-    else
-    {
-      ledOff();
-    }
     if (MspeedL < MspeedT - 10) {
       MspeedL++;
     }
@@ -214,7 +88,6 @@ void movement()
   }
   else
   {
-    ledBlue();
     if (MspeedL < MspeedT) {
       MspeedL++;
     }
@@ -234,14 +107,14 @@ void movement()
     if ((Mcycle % (100 / MspeedL)) == 0)
     {
       myStepperL.step(-1);
-      Mangle += 0.11;
+      Mangle += 0.23;
     }
   }
   else if (MspeedL < 0) {
     if ((Mcycle % (100 / MspeedL)) == 0)
     {
       myStepperL.step(1);
-      Mangle -= 0.11;
+      Mangle -= 0.23;
     }
   }
 
@@ -249,14 +122,14 @@ void movement()
     if ((Mcycle % (100 / MspeedR)) == 0)
     {
       myStepperR.step(1);
-      Mangle -= 0.11;
+      Mangle -= 0.23;
     }
   }
   else if (MspeedR < 0) {
     if ((Mcycle % (100 / MspeedR)) == 0)
     {
       myStepperR.step(-1);
-      Mangle += 0.11;
+      Mangle += 0.23;
     }
   }
   if (-2 < Mangle && Mangle < 2)
@@ -373,13 +246,36 @@ void potread() {                //Function to see if the AGV drives straight
   else { //Both arms turn outwards(AGV needs to turn)  Can be changed to else right??
     situation = 4;
     //Serial.println("sit4");
+  }  
+}
+
+void simpleRadar() {
+  if (Mcycle % 30 == 0) {
+  //Sensor Rechts
+  digitalWrite(TRIGGER_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIGGER_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGGER_PIN, LOW);
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  //Calculate the distance (in cm) based on the speed of sound.
+  distance = duration / 58.2*10;
+
+  distance = constrain(distance, 20, 500);
   }
+  if(distance<=150){
+    situation=0;
+  }
+  
+
 }
 /*
   void radarRead() {
   myservo.write(pos * 30);
   delay(1);
   radar = sonar.convert_cm(sonar.ping_median(10));
+
   if (pos == 6) {
     dir = 1;
   }
@@ -416,11 +312,12 @@ void loop()
   }
   potread();
   //radarRead();
-
+  
+  simpleRadar();
+  
   /* serial.print(analogRead(potL));
     Serial.print("   ");
     Serial.println(analogRead(potR));*/
   movement();
   delay(1);
 }
-
